@@ -33,6 +33,7 @@ return new class extends Migration
             $table->integer('product_id')->unsigned();
             $table->integer('category_id')->unsigned();
 
+            $table->primary(['product_id', 'category_id']);
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
@@ -41,6 +42,7 @@ return new class extends Migration
             $table->integer('parent_id')->unsigned();
             $table->integer('child_id')->unsigned();
 
+            $table->primary(['parent_id', 'child_id']);
             $table->foreign('parent_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('child_id')->references('id')->on('products')->onDelete('cascade');
         });
@@ -49,6 +51,7 @@ return new class extends Migration
             $table->integer('product_id')->unsigned();
             $table->integer('attribute_id')->unsigned();
 
+            $table->primary(['product_id', 'attribute_id']);
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('restrict');
         });
@@ -57,6 +60,7 @@ return new class extends Migration
             $table->integer('parent_id')->unsigned();
             $table->integer('child_id')->unsigned();
 
+            $table->primary(['parent_id', 'child_id']);
             $table->foreign('parent_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('child_id')->references('id')->on('products')->onDelete('cascade');
         });
@@ -65,6 +69,7 @@ return new class extends Migration
             $table->integer('parent_id')->unsigned();
             $table->integer('child_id')->unsigned();
 
+            $table->primary(['parent_id', 'child_id']);
             $table->foreign('parent_id')->references('id')->on('products')->onDelete('cascade');
             $table->foreign('child_id')->references('id')->on('products')->onDelete('cascade');
         });
@@ -75,7 +80,7 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('product_cross_sells');
 
