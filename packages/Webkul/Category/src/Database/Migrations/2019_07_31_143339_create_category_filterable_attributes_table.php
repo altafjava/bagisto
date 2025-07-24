@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('category_id')->unsigned();
             $table->integer('attribute_id')->unsigned();
 
+            $table->primary(['category_id', 'attribute_id']);
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
         });
