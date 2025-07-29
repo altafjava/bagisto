@@ -2,16 +2,6 @@
     'hasHeader'  => true,
     'hasFeature' => true,
     'hasFooter'  => true,
-])
-
-<!DOCTYPE html>
-
-<html
-    lang="{{ app()->getLocale() }}"
-    dir="{{ core()->getCurrentLocale()->direction }}"
->
-    <head>
-
         {!! view_render_event('bagisto.shop.layout.head.before') !!}
 
         <title>{{ $title ?? '' }}</title>
@@ -38,6 +28,10 @@
         <meta
             name="currency"
             content="{{ core()->getCurrentCurrency()->toJson() }}"
+            name="viewport"
+            content="width=device-width, initial-scale=1"
+        >
+        <meta
         >
 
         @stack('meta')
@@ -46,17 +40,6 @@
             rel="icon"
             sizes="16x16"
             href="{{ core()->getCurrentChannel()->favicon_url ?? bagisto_asset('images/favicon.ico') }}"
-        />
-
-        @bagistoVite(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])
-
-        <link
-            rel="preload"
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
-            as="style"
-        >
-        <link
-            rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
         >
 
@@ -98,13 +81,6 @@
 
         <div id="app">
             <!-- Flash Message Blade Component -->
-            <x-shop::flash-group />
-
-            <!-- Confirm Modal Blade Component -->
-            <x-shop::modal.confirm />
-
-            <!-- Page Header Blade Component -->
-            @if ($hasHeader)
                 <x-shop::layouts.header />
             @endif
 

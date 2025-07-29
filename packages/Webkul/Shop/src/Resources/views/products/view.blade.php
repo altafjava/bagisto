@@ -9,8 +9,8 @@
     $customAttributeValues = $productViewHelper->getAdditionalData($product);
 
     $attributeData = collect($customAttributeValues)->filter(fn ($item) => ! empty($item['value']));
-@endphp
-
+    @if (core()->getConfigData('catalog.rich_snippets.products.enable'))
+        <script type="application/ld+json">
 <!-- SEO Meta Content -->
 @push('meta')
     <meta name="description" content="{{ trim($product->meta_description) != "" ? $product->meta_description : \Illuminate\Support\Str::limit(strip_tags($product->description), 120, '') }}"/>
@@ -35,6 +35,22 @@
 
     <meta name="twitter:image" content="{{ $productBaseImage['medium_image_url'] }}" />
 
+    <meta property="og:type" content="og:product" />
+
+    <meta property="og:title" content="{{ $product->name }}" />
+
+    <meta property="og:image" content="{{ $productBaseImage['medium_image_url'] }}" />
+
+    <meta property="og:description" content="{!! htmlspecialchars(trim(strip_tags($product->description))) !!}" />
+
+    <meta property="og:url" content="{{ route('shop.product_or_category.index', $product->url_key) }}" />
+@endPush
+
+            {!! app('Webkul\Product\Helpers\SEO')->getProductJsonLd($product) !!}
+<x-shop::layouts>
+
+    <meta name="twitter:image" content="{{ $productBaseImage['medium_image_url'] }}" />
+        {{ trim($product->meta_title) != "" ? $product->meta_title : $product->name }}
     <meta property="og:type" content="og:product" />
 
     <meta property="og:title" content="{{ $product->name }}" />

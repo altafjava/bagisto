@@ -7,7 +7,6 @@ use Webkul\Shop\Http\Controllers\HomeController;
 use Webkul\Shop\Http\Controllers\PageController;
 use Webkul\Shop\Http\Controllers\ProductController;
 use Webkul\Shop\Http\Controllers\ProductsCategoriesProxyController;
-use Webkul\Shop\Http\Controllers\SearchController;
 use Webkul\Shop\Http\Controllers\SubscriptionController;
 
 /**
@@ -22,13 +21,6 @@ Route::get('page/{slug}', [PageController::class, 'view'])
  */
 Route::fallback(ProductsCategoriesProxyController::class.'@index')
     ->name('shop.product_or_category.index')
-    ->middleware('cache.response');
-
-/**
- * Store front home.
- */
-Route::get('/', [HomeController::class, 'index'])
-    ->name('shop.home.index')
     ->middleware('cache.response');
 
 Route::get('contact-us', [HomeController::class, 'contactUs'])

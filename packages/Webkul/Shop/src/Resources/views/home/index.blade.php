@@ -1,7 +1,7 @@
 @php
     $channel = core()->getCurrentChannel();
-@endphp
-
+@push ('meta')
+    <meta
 <!-- SEO Meta Content -->
 @push ('meta')
     <meta
@@ -17,6 +17,13 @@
     <meta
         name="keywords"
         content="{{ $channel->home_seo['meta_keywords'] ?? '' }}"
+    />
+@endPush
+
+<x-shop::layouts>
+    <meta
+        name="keywords"
+        {{  $channel->home_seo['meta_title'] ?? '' }}
     />
 @endPush
 

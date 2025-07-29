@@ -18,7 +18,9 @@
 @endPush
 
 <x-shop::layouts>
-    <!-- Page Title -->
+
+<x-shop::layouts>
+        {{ trim($category->meta_title) != "" ? $category->meta_title : $category->name }}
     <x-slot:title>
         {{ trim($category->meta_title) != "" ? $category->meta_title : $category->name }}
     </x-slot>
