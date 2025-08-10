@@ -5,6 +5,8 @@
 .phpunit.result.cache
 .vscode
 .vagrant
+.DS_Store
+Thumbs.db
 *.hot
 /stubs
 /data
@@ -21,6 +23,7 @@ package-lock.json
 /public/hot
 /public/storage
 /public/vendor
+/public/build
 /lang/vendor
 /storage/*.key
 /storage/dcc-data/
