@@ -8,6 +8,10 @@
 .DS_Store
 Thumbs.db
 *.hot
+.trae/
+.github/
+.vercel/
+CHANGELOG.md
 /stubs
 /data
 /docker-compose-collection
@@ -33,6 +37,3 @@ yarn.lock
 yarn-error.log
 /test-results
 /playwright-report
-.trae/
-.github/
-.vercel/
