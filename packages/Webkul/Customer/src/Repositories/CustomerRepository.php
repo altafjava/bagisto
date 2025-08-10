@@ -4,10 +4,23 @@ namespace Webkul\Customer\Repositories;
 
 use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 use Webkul\Sales\Models\Order;
 
 class CustomerRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
+
     /**
      * Specify model class name.
      */
@@ -56,20 +69,23 @@ class CustomerRepository extends Repository
 
             foreach ($data[$type] as $imageId => $image) {
                 $file = $type.'.'.$imageId;
-                $dir = 'customer/'.$customer->id;
+                $folder = $this->storageService->isCloudinaryEnabled() 
+                    ? config('bagisto-cloudinary.folders.customers', 'bagisto/customers') . '/' . $customer->id
+                    : 'customer/' . $customer->id;
 
                 if ($request->hasFile($file)) {
                     if ($customer->{$type}) {
-                        Storage::delete($customer->{$type});
+                        $this->storageService->deleteFile($customer->{$type});
                     }
 
-                    $customer->{$type} = $request->file($file)->store($dir);
+                    $path = $this->storageService->uploadImage($request->file($file), $folder);
+                    $customer->{$type} = $path;
                     $customer->save();
                 }
             }
         } else {
             if ($customer->{$type}) {
-                Storage::delete($customer->{$type});
+                $this->storageService->deleteFile($customer->{$type});
             }
 
             $customer->{$type} = null;

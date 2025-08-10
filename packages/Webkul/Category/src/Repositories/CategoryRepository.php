@@ -3,15 +3,24 @@
 namespace Webkul\Category\Repositories;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
 use Webkul\Category\Contracts\Category;
 use Webkul\Category\Models\CategoryTranslationProxy;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 
 class CategoryRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
     /**
      * Specify model class name.
      */
@@ -242,23 +251,21 @@ class CategoryRepository extends Repository
 
                 if (request()->hasFile($file)) {
                     if ($category->{$type}) {
-                        Storage::delete($category->{$type});
+                        $this->storageService->deleteFile($category->{$type});
                     }
 
-                    $manager = new ImageManager;
+                    $folder = $this->storageService->isCloudinaryEnabled() 
+                        ? config('bagisto-cloudinary.folders.categories', 'bagisto/categories') . '/' . $category->id
+                        : 'category/' . $category->id;
+                    $path = $this->storageService->uploadImage(request()->file($file), $folder);
 
-                    $image = $manager->make(request()->file($file))->encode('webp');
-
-                    $category->{$type} = 'category/'.$category->id.'/'.Str::random(40).'.webp';
-
-                    Storage::put($category->{$type}, $image);
-
+                    $category->{$type} = $path;
                     $category->save();
                 }
             }
         } else {
             if ($category->{$type}) {
-                Storage::delete($category->{$type});
+                $this->storageService->deleteFile($category->{$type});
             }
 
             $category->{$type} = null;

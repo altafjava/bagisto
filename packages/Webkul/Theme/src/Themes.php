@@ -231,6 +231,11 @@ class Themes
          * detect the theme and provide Vite assets based on the current theme.
          */
         if (empty($namespace)) {
+            // If no theme is currently set, set a default theme based on the context
+            if ($this->current() === null) {
+                $this->setDefaultTheme();
+            }
+            
             return $this->current()->url($url);
         }
 
@@ -264,6 +269,11 @@ class Themes
          * detect the theme and provide Vite assets based on the current theme.
          */
         if (empty($namespace)) {
+            // If no theme is currently set, set a default theme based on the context
+            if ($this->current() === null) {
+                $this->setDefaultTheme();
+            }
+            
             return $this->current()->setBagistoVite($entryPoints);
         }
 
@@ -280,5 +290,34 @@ class Themes
         return Vite::useHotFile($viters[$namespace]['hot_file'])
             ->useBuildDirectory($viters[$namespace]['build_directory'])
             ->withEntryPoints($entryPoints);
+    }
+
+    /**
+     * Set a default theme when none is currently active.
+     * This prevents errors when bagisto_asset() is called outside of web requests.
+     *
+     * @return void
+     */
+    protected function setDefaultTheme()
+    {
+        // Determine if we're in admin context or shop context
+        $isAdminContext = false;
+        
+        // Check if we're in a console command or if the request URL contains admin path
+        if (app()->runningInConsole()) {
+            // For console commands, default to shop theme unless explicitly admin
+            $isAdminContext = false;
+        } elseif (request() && request()->url()) {
+            $isAdminContext = Str::contains(request()->url(), config('app.admin_url').'/');
+        }
+
+        // Set the appropriate default theme
+        if ($isAdminContext) {
+            $defaultTheme = config('themes.admin-default', 'default');
+        } else {
+            $defaultTheme = config('themes.shop-default', 'default');
+        }
+
+        $this->set($defaultTheme);
     }
 }

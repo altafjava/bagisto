@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Eloquent\TranslatableModel;
+use Webkul\Core\Services\StorageService;
 use Webkul\Product\Contracts\ProductDownloadableLink as ProductDownloadableLinkContract;
 use Webkul\Product\Database\Factories\ProductDownloadableLinkFactory;
 
@@ -46,7 +47,9 @@ class ProductDownloadableLink extends TranslatableModel implements ProductDownlo
      */
     public function file_url(): string
     {
-        return Storage::url($this->file);
+        $storageService = app(StorageService::class);
+        
+        return $storageService->getFileUrl($this->file);
     }
 
     /**
@@ -62,7 +65,9 @@ class ProductDownloadableLink extends TranslatableModel implements ProductDownlo
      */
     public function sample_file_url(): string
     {
-        return Storage::url($this->sample_file);
+        $storageService = app(StorageService::class);
+        
+        return $storageService->getFileUrl($this->sample_file);
     }
 
     /**
@@ -81,9 +86,11 @@ class ProductDownloadableLink extends TranslatableModel implements ProductDownlo
 
         $array['title'] = $translation->title ?? '';
 
-        $array['file_url'] = $this->file ? Storage::url($this->file) : null;
+        $storageService = app(StorageService::class);
 
-        $array['sample_file_url'] = $this->sample_file ? Storage::url($this->sample_file) : null;
+        $array['file_url'] = $this->file ? $storageService->getFileUrl($this->file) : null;
+
+        $array['sample_file_url'] = $this->sample_file ? $storageService->getFileUrl($this->sample_file) : null;
 
         return $array;
     }

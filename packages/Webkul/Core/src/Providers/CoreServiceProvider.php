@@ -19,6 +19,8 @@ class CoreServiceProvider extends ServiceProvider
         $this->registerCommands();
 
         $this->registerOverrides();
+
+        $this->registerServices();
     }
 
     /**
@@ -47,6 +49,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->register(EventServiceProvider::class);
         $this->app->register(ImageServiceProvider::class);
         $this->app->register(VisitorServiceProvider::class);
+        $this->app->register(StorageServiceProvider::class);
     }
 
     /**
@@ -97,5 +100,47 @@ class CoreServiceProvider extends ServiceProvider
             'blade.compiler',
             fn ($app) => new \Webkul\Core\View\Compilers\BladeCompiler($app['files'], $app['config']['view.compiled'])
         );
+    }
+
+    /**
+     * Register custom services.
+     */
+    protected function registerServices(): void
+    {
+        $this->app->singleton(
+            \Webkul\Core\Services\AssetUrlResolver::class,
+            fn ($app) => new \Webkul\Core\Services\AssetUrlResolver()
+        );
+
+        $this->app->singleton(
+            \Webkul\Core\Services\IntelligentStorageManager::class,
+            fn ($app) => new \Webkul\Core\Services\IntelligentStorageManager(
+                $app[\Webkul\Core\Services\AssetUrlResolver::class]
+            )
+        );
+
+        // Register the Cloudinary configuration guard
+        $this->app->singleton(
+            \Webkul\Core\Services\CloudinaryConfigurationGuard::class,
+            fn ($app) => new \Webkul\Core\Services\CloudinaryConfigurationGuard(
+                $app[\Webkul\Core\Services\StorageService::class]
+            )
+        );
+
+        // Register the intelligent storage facade
+        $this->app->singleton('intelligent-storage', function ($app) {
+            return new \Webkul\Core\Services\IntelligentStorageFacade(
+                $app[\Webkul\Core\Services\AssetUrlResolver::class],
+                $app[\Webkul\Core\Services\StorageService::class]
+            );
+        });
+
+        // Override the Storage facade with intelligent storage behavior
+        $this->app->extend('filesystem', function ($filesystem, $app) {
+            return new \Webkul\Core\Services\StorageFacadeOverride(
+                $app,
+                $app['intelligent-storage']
+            );
+        });
     }
 }

@@ -5,6 +5,7 @@ namespace Webkul\Product\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Product\Contracts\ProductVideo as ProductVideoContract;
+use Webkul\Core\Services\StorageService;
 
 class ProductVideo extends Model implements ProductVideoContract
 {
@@ -51,7 +52,9 @@ class ProductVideo extends Model implements ProductVideoContract
      */
     public function url()
     {
-        return Storage::url($this->path);
+        $storageService = app(StorageService::class);
+        
+        return $storageService->getFileUrl($this->path);
     }
 
     /**

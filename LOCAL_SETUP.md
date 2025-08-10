@@ -81,13 +81,15 @@ mysql -u root -p
 ```
 
 ```sql
+DROP DATABASE IF EXISTS bagisto;
 CREATE DATABASE bagisto;
 
 -- (Optional: create a dedicated user)
-CREATE USER 'bagisto_user@localhost' IDENTIFIED BY 'bagisto_password';
-GRANT ALL PRIVILEGES ON bagisto.* TO 'bagisto_user@localhost';
+DROP USER IF EXISTS 'buser'@'localhost';
+CREATE USER 'buser'@'localhost' IDENTIFIED BY 'password';
+
+GRANT ALL PRIVILEGES ON bagisto.* TO 'buser'@'localhost';
 FLUSH PRIVILEGES;
-EXIT;
 ```
 
 If you created a user, update `.env` accordingly.
@@ -98,7 +100,7 @@ If you created a user, update `.env` accordingly.
 
 ```bash
 php artisan key:generate
-# php artisan storage:link
+php artisan storage:link
 ```
 
 ---
@@ -146,3 +148,15 @@ Visit: **[http://localhost:8000](http://localhost:8000)**
 Email: admin@example.com
 Password: admin123
 ```
+
+
+## 11. Additional Commands
+composer clear-cache
+php artisan config:clear
+php artisan cache:clear
+
+composer install --no-dev --optimize-autoloader 
+
+### Remove public images then link again
+Remove-Item "e:\workspace\php-workspace\bagisto\public\storage" -Recurse -Force 
+php artisan storage:link
