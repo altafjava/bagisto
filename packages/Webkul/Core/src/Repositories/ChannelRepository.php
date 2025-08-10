@@ -2,11 +2,22 @@
 
 namespace Webkul\Core\Repositories;
 
-use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 
 class ChannelRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
     /**
      * Specify model class name.
      */
@@ -82,13 +93,17 @@ class ChannelRepository extends Repository
     public function uploadImages($data, $channel, $type = 'logo')
     {
         if (request()->hasFile($type)) {
-            $channel->{$type} = current(request()->file($type))->store('channel/'.$channel->id);
+            $folder = $this->storageService->isCloudinaryEnabled() 
+                ? config('bagisto-cloudinary.folders.channels', 'bagisto/channels') . '/' . $channel->id
+                : 'channel/' . $channel->id;
+            $path = $this->storageService->uploadImage(current(request()->file($type)), $folder);
 
+            $channel->{$type} = $path;
             $channel->save();
         } else {
             if (! isset($data[$type])) {
                 if (! empty($data[$type])) {
-                    Storage::delete($channel->{$type});
+                    $this->storageService->deleteFile($channel->{$type});
                 }
 
                 $channel->{$type} = null;

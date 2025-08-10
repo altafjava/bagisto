@@ -20,6 +20,8 @@
         "astrotomic/laravel-translatable": "^11.0.0",
         "bagisto/image-cache": "dev-master",
         "barryvdh/laravel-dompdf": "^2.0.0",
+        "cloudinary-labs/cloudinary-laravel": "*",
+        "cloudinary/cloudinary_php": "^2.0",
         "diglactic/laravel-breadcrumbs": "^9.0",
         "elasticsearch/elasticsearch": "^8.10",
         "enshrined/svg-sanitize": "^0.16.0",

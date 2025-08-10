@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Product\Contracts\ProductReviewAttachment as ProductReviewAttachmentContract;
 use Webkul\Product\Database\Factories\ProductReviewAttachmentFactory;
+use Webkul\Core\Services\StorageService;
 
 class ProductReviewAttachment extends Model implements ProductReviewAttachmentContract
 {
@@ -53,7 +54,9 @@ class ProductReviewAttachment extends Model implements ProductReviewAttachmentCo
      */
     public function url(): string
     {
-        return Storage::url($this->path);
+        $storageService = app(StorageService::class);
+        
+        return $storageService->getFileUrl($this->path);
     }
 
     /**

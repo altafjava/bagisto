@@ -11,6 +11,7 @@ use Webkul\Category\Models\CategoryProxy;
 use Webkul\Core\Contracts\Channel as ChannelContract;
 use Webkul\Core\Database\Factories\ChannelFactory;
 use Webkul\Core\Eloquent\TranslatableModel;
+use Webkul\Core\Services\StorageService;
 use Webkul\Inventory\Models\InventorySourceProxy;
 
 class Channel extends TranslatableModel implements ChannelContract
@@ -115,7 +116,10 @@ class Channel extends TranslatableModel implements ChannelContract
             return;
         }
 
-        return Storage::url($this->logo);
+        $storageService = app(StorageService::class);
+        $disk = $storageService->getDisk();
+        
+        return Storage::disk($disk)->url($this->logo);
     }
 
     /**
@@ -135,7 +139,10 @@ class Channel extends TranslatableModel implements ChannelContract
             return;
         }
 
-        return Storage::url($this->favicon);
+        $storageService = app(StorageService::class);
+        $disk = $storageService->getDisk();
+        
+        return Storage::disk($disk)->url($this->favicon);
     }
 
     /**

@@ -54,7 +54,9 @@ class ProductServiceProvider extends ServiceProvider
     protected function registerCommands(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([Indexer::class]);
+            $this->commands([
+                Indexer::class,
+            ]);
         }
     }
 }

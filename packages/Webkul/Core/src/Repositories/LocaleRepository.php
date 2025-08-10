@@ -7,9 +7,22 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Core\Contracts\Locale;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 
 class LocaleRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
+
     /**
      * Specify model class name.
      */
@@ -68,7 +81,7 @@ class LocaleRepository extends Repository
 
         $locale->delete($id);
 
-        Storage::delete((string) $locale->logo_path);
+        $this->storageService->deleteFile((string) $locale->logo_path);
 
         Event::dispatch('core.locale.delete.after', $id);
     }
@@ -84,7 +97,7 @@ class LocaleRepository extends Repository
     {
         if (! isset($localeImages['logo_path'])) {
             if (! empty($localeImages['logo_path'])) {
-                Storage::delete((string) $locale->logo_path);
+                $this->storageService->deleteFile((string) $locale->logo_path);
             }
 
             $locale->logo_path = null;
@@ -96,11 +109,14 @@ class LocaleRepository extends Repository
 
         foreach ($localeImages['logo_path'] as $image) {
             if ($image instanceof UploadedFile) {
-                $locale->logo_path = $image->storeAs(
-                    'locales',
-                    $locale->code.'.'.$image->getClientOriginalExtension()
-                );
-
+                $folder = $this->storageService->isCloudinaryEnabled() 
+                    ? config('bagisto-cloudinary.folders.locales', 'bagisto/locales')
+                    : 'locale';
+                $filename = $locale->code . '.' . $image->getClientOriginalExtension();
+                
+                $path = $this->storageService->uploadImage($image, $folder, ['public_id' => $locale->code]);
+                
+                $locale->logo_path = $path;
                 $locale->save();
             }
         }

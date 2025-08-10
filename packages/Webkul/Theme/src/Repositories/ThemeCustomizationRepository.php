@@ -7,10 +7,22 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 use Webkul\Theme\Contracts\ThemeCustomization;
 
 class ThemeCustomizationRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
     /**
      * Specify model class name.
      */
@@ -72,7 +84,7 @@ class ThemeCustomizationRepository extends Repository
 
         if (isset($data[$locale]['deleted_sliders'])) {
             foreach ($data[$locale]['deleted_sliders'] as $slider) {
-                Storage::delete(str_replace('storage/', '', $slider['image']));
+                $this->storageService->deleteFile(str_replace('storage/', '', $slider['image']));
             }
         }
 
@@ -91,11 +103,10 @@ class ThemeCustomizationRepository extends Repository
                 ];
             } elseif ($image['image'] instanceof UploadedFile) {
                 try {
-                    $manager = new ImageManager;
-
-                    $path = 'theme/'.$theme->id.'/'.Str::random(40).'.webp';
-
-                    Storage::put($path, $manager->make($image['image'])->encode('webp'));
+                    $folder = $this->storageService->isCloudinaryEnabled() 
+                        ? config('bagisto-cloudinary.folders.themes', 'bagisto/themes') . '/' . $theme->id
+                        : 'theme/' . $theme->id;
+                    $path = $this->storageService->uploadImage($image['image'], $folder);
                 } catch (\Exception $e) {
                     session()->flash('error', $e->getMessage());
 
@@ -103,11 +114,11 @@ class ThemeCustomizationRepository extends Repository
                 }
 
                 if (($data['type'] ?? '') == 'static_content') {
-                    return Storage::url($path);
+                    return $this->storageService->getFileUrl($path);
                 }
 
                 $options['images'][] = [
-                    'image' => 'storage/'.$path,
+                    'image' => $this->storageService->getFileUrl($path),
                     'link'  => $image['link'],
                     'title' => $image['title'],
                 ];

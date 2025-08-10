@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Webkul\Admin\Mail\Admin\ResetPasswordNotification;
+use Webkul\Core\Services\StorageService;
 use Webkul\User\Contracts\Admin as AdminContract;
 use Webkul\User\Database\Factories\AdminFactory;
 
@@ -51,7 +52,10 @@ class Admin extends Authenticatable implements AdminContract
             return;
         }
 
-        return Storage::url($this->image);
+        $storageService = app(StorageService::class);
+        $disk = $storageService->getDisk();
+        
+        return Storage::disk($disk)->url($this->image);
     }
 
     /**
