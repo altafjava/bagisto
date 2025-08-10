@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Webkul\Customer\Contracts\Wishlist;
 use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Core\Services\StorageService;
 
 class ProductImage
 {
@@ -14,7 +15,10 @@ class ProductImage
      *
      * @return void
      */
-    public function __construct(protected ProductRepository $productRepository) {}
+    public function __construct(
+        protected ProductRepository $productRepository,
+        protected StorageService $storageService
+    ) {}
 
     /**
      * Retrieve collection of gallery images.
@@ -31,7 +35,8 @@ class ProductImage
         $images = [];
 
         foreach ($product->images as $image) {
-            if (! Storage::has($image->path)) {
+            // Skip Storage::has() check for complete URLs (Cloudinary, S3, etc.)
+            if (! $this->isCompleteUrl($image->path) && ! Storage::has($image->path)) {
                 continue;
             }
 
@@ -120,15 +125,40 @@ class ProductImage
      */
     private function getCachedImageUrls($path): array
     {
-        if (! $this->isDriverLocal()) {
+        // Check if the path is already a complete URL (Cloudinary, S3, etc.)
+        if ($this->isCompleteUrl($path)) {
+            // For Cloudinary URLs, apply transformations for different sizes
+            if ($this->isCloudinaryUrl($path)) {
+                return [
+                    'small_image_url'    => $this->transformCloudinaryUrl($path, 'small'),
+                    'medium_image_url'   => $this->transformCloudinaryUrl($path, 'medium'),
+                    'large_image_url'    => $this->transformCloudinaryUrl($path, 'large'),
+                    'original_image_url' => $path,
+                ];
+            }
+            
+            // For other complete URLs (S3, etc.), return them directly
             return [
-                'small_image_url'    => Storage::url($path),
-                'medium_image_url'   => Storage::url($path),
-                'large_image_url'    => Storage::url($path),
-                'original_image_url' => Storage::url($path),
+                'small_image_url'    => $path,
+                'medium_image_url'   => $path,
+                'large_image_url'    => $path,
+                'original_image_url' => $path,
             ];
         }
 
+        $disk = $this->storageService->getDisk();
+        
+        if ($disk !== 'public' && $disk !== 'local') {
+            // For cloud storage with relative paths, use StorageService getFileUrl()
+            return [
+                'small_image_url'    => $this->storageService->getFileUrl($path),
+                'medium_image_url'   => $this->storageService->getFileUrl($path),
+                'large_image_url'    => $this->storageService->getFileUrl($path),
+                'original_image_url' => $this->storageService->getFileUrl($path),
+            ];
+        }
+
+        // For local storage, use cached URLs
         return [
             'small_image_url'    => url('cache/small/'.$path),
             'medium_image_url'   => url('cache/medium/'.$path),
@@ -138,20 +168,77 @@ class ProductImage
     }
 
     /**
+     * Check if the given path is a complete URL.
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    private function isCompleteUrl(string $path): bool
+    {
+        return filter_var($path, FILTER_VALIDATE_URL) !== false;
+    }
+
+    /**
+     * Check if the given path is a Cloudinary URL.
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    private function isCloudinaryUrl(string $path): bool
+    {
+        return $this->isCompleteUrl($path) && 
+               (str_contains($path, 'cloudinary.com') || str_contains($path, 'res.cloudinary.com'));
+    }
+
+    /**
+     * Transform Cloudinary URL for different image sizes.
+     *
+     * @param  string  $url
+     * @param  string  $size
+     * @return string
+     */
+    private function transformCloudinaryUrl(string $url, string $size): string
+    {
+        // Define size transformations
+        $transformations = [
+            'small'  => 'w_300,h_300,c_fill,f_auto,q_auto',
+            'medium' => 'w_600,h_600,c_fill,f_auto,q_auto',
+            'large'  => 'w_1200,h_1200,c_fill,f_auto,q_auto',
+        ];
+
+        if (!isset($transformations[$size])) {
+            return $url;
+        }
+
+        // Check if URL already has transformations
+        if (preg_match('/\/image\/upload\/([^\/]+)\//', $url, $matches)) {
+            // Replace existing transformations
+            $newTransformation = $transformations[$size];
+            return str_replace($matches[1], $newTransformation, $url);
+        } elseif (str_contains($url, '/image/upload/')) {
+            // Add transformations after /image/upload/
+            return str_replace('/image/upload/', '/image/upload/' . $transformations[$size] . '/', $url);
+        }
+
+        // If it's a Cloudinary URL but doesn't match expected pattern, return as-is
+        return $url;
+    }
+
+    /**
      * Get fallback urls.
      */
     private function getFallbackImageUrls(): array
     {
         $smallImageUrl = core()->getConfigData('catalog.products.cache_small_image.url')
-                        ? Storage::url(core()->getConfigData('catalog.products.cache_small_image.url'))
+                        ? $this->storageService->getFileUrl(core()->getConfigData('catalog.products.cache_small_image.url'))
                         : bagisto_asset('images/small-product-placeholder.webp', 'shop');
 
         $mediumImageUrl = core()->getConfigData('catalog.products.cache_medium_image.url')
-                        ? Storage::url(core()->getConfigData('catalog.products.cache_medium_image.url'))
+                        ? $this->storageService->getFileUrl(core()->getConfigData('catalog.products.cache_medium_image.url'))
                         : bagisto_asset('images/medium-product-placeholder.webp', 'shop');
 
         $largeImageUrl = core()->getConfigData('catalog.products.cache_large_image.url')
-                        ? Storage::url(core()->getConfigData('catalog.products.cache_large_image.url'))
+                        ? $this->storageService->getFileUrl(core()->getConfigData('catalog.products.cache_large_image.url'))
                         : bagisto_asset('images/large-product-placeholder.webp', 'shop');
 
         return [
@@ -160,13 +247,5 @@ class ProductImage
             'large_image_url'    => $largeImageUrl,
             'original_image_url' => bagisto_asset('images/large-product-placeholder.webp', 'shop'),
         ];
-    }
-
-    /**
-     * Is driver local.
-     */
-    private function isDriverLocal(): bool
-    {
-        return Storage::getAdapter() instanceof LocalFilesystemAdapter;
     }
 }

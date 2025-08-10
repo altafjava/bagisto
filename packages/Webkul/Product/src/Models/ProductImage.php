@@ -5,6 +5,7 @@ namespace Webkul\Product\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Product\Contracts\ProductImage as ProductImageContract;
+use Webkul\Core\Services\StorageService;
 
 class ProductImage extends Model implements ProductImageContract
 {
@@ -51,7 +52,9 @@ class ProductImage extends Model implements ProductImageContract
      */
     public function url()
     {
-        return Storage::url($this->path);
+        $storageService = app(StorageService::class);
+        
+        return $storageService->getFileUrl($this->path);
     }
 
     /**

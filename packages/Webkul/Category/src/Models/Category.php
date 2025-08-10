@@ -12,6 +12,7 @@ use Webkul\Attribute\Models\AttributeProxy;
 use Webkul\Category\Contracts\Category as CategoryContract;
 use Webkul\Category\Database\Factories\CategoryFactory;
 use Webkul\Core\Eloquent\TranslatableModel;
+use Webkul\Core\Services\StorageService;
 use Webkul\Product\Models\ProductProxy;
 
 class Category extends TranslatableModel implements CategoryContract
@@ -107,7 +108,10 @@ class Category extends TranslatableModel implements CategoryContract
             return;
         }
 
-        return Storage::url($this->logo_path);
+        $storageService = app(StorageService::class);
+        $disk = $storageService->getDisk();
+        
+        return Storage::disk($disk)->url($this->logo_path);
     }
 
     /**
@@ -121,7 +125,10 @@ class Category extends TranslatableModel implements CategoryContract
             return;
         }
 
-        return Storage::url($this->banner_path);
+        $storageService = app(StorageService::class);
+        $disk = $storageService->getDisk();
+        
+        return Storage::disk($disk)->url($this->banner_path);
     }
 
     /**
