@@ -8,9 +8,22 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Core\Services\StorageService;
 
 class ProductMediaRepository extends Repository
 {
+    /**
+     * Create a new repository instance.
+     *
+     * @param  \Webkul\Core\Services\StorageService  $storageService
+     * @return void
+     */
+    public function __construct(
+        protected StorageService $storageService
+    ) {
+        parent::__construct(app());
+    }
+
     /**
      * Specify model class name.
      *
@@ -33,7 +46,15 @@ class ProductMediaRepository extends Repository
      */
     public function getProductDirectory($product): string
     {
-        return 'product/'.$product->id;
+        // Check if Cloudinary is enabled and configured
+        if ($this->storageService->getDisk() === 'cloudinary') {
+            // Use Cloudinary folder structure
+            $baseFolder = config('bagisto-cloudinary.folders.products', 'bagisto/products');
+            return $baseFolder . '/' . $product->id;
+        }
+
+        // Use original local storage path for backward compatibility
+        return 'product/' . $product->id;
     }
 
     /**
@@ -54,16 +75,14 @@ class ProductMediaRepository extends Repository
         if (! empty($data[$uploadFileType]['files'])) {
             foreach ($data[$uploadFileType]['files'] as $indexOrModelId => $file) {
                 if ($file instanceof UploadedFile) {
+                    $folder = $this->getProductDirectory($product);
+                    
                     if (Str::contains($file->getMimeType(), 'image')) {
-                        $manager = new ImageManager;
-
-                        $image = $manager->make($file)->encode('webp');
-
-                        $path = $this->getProductDirectory($product).'/'.Str::random(40).'.webp';
-
-                        Storage::put($path, $image);
+                        $path = $this->storageService->uploadImage($file, $folder);
+                    } elseif (Str::contains($file->getMimeType(), 'video')) {
+                        $path = $this->storageService->uploadVideo($file, $folder);
                     } else {
-                        $path = $file->store($this->getProductDirectory($product));
+                        $path = $this->storageService->uploadFile($file, $folder);
                     }
 
                     $this->create([
@@ -89,7 +108,7 @@ class ProductMediaRepository extends Repository
                 continue;
             }
 
-            Storage::delete($model->path);
+            $this->storageService->deleteFile($model->path);
 
             $this->delete($indexOrModelId);
         }

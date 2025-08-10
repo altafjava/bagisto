@@ -43,6 +43,6 @@ class CashOnDelivery extends Payment
     {
         $url = $this->getConfigData('image');
 
-        return $url ? Storage::url($url) : bagisto_asset('images/cash-on-delivery.png', 'shop');
+        return $url ? bagisto_asset($url) : bagisto_asset('images/cash-on-delivery.png', 'shop');
     }
 }
