@@ -20,6 +20,7 @@ Enable the following in `C:\xampp\php\php.ini` by removing `;` at the beginning:
 extension=intl
 extension=zip
 extension=fileinfo
+extension=gd
 ```
 Restart Apache from the XAMPP Control Panel then Verify:
 ```
